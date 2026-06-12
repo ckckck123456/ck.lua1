@@ -1,0 +1,470 @@
+local get = cloneref or function(x) return x end
+local players = get(game:GetService("Players")); local lp = players.LocalPlayer
+local rs = get(game:GetService("RunService"))
+local vim = get(game:GetService("VirtualInputManager"))
+local rep = get(game:GetService("ReplicatedStorage"))
+local marketplace = get(game:GetService("MarketplaceService"))
+local tweens = get(game:GetService("TweenService"))
+
+-- 安全获取游戏模块
+local Handler = { Status = "Unknown", InGame = false, StatusChanged = { Connect = function() end } }
+local Network = {}
+local area = nil
+local waves = nil
+local kupg = nil
+local plot = nil
+
+pcall(function() Handler = require(rep.Modules.HandlerLoader.GameHandler) end)
+pcall(function() Network = rep["Shared"]["Packages"]["Network"] end)
+pcall(function() area = workspace.Areas.KickReady end)
+pcall(function() waves = workspace.Waves end)
+pcall(function() 
+    local gui = lp:WaitForChild("PlayerGui")
+    kupg = gui:WaitForChild("KickUpgrades")
+end)
+pcall(function()
+    for _, item in ipairs(workspace.Plots:GetChildren()) do
+        if item:GetAttribute("Owner") == lp.Name then
+            plot = item; break
+        end
+    end
+end)
+
+local function _kick(strength)
+    pcall(function() Network["rev_KickEvent"]:FireServer(strength or 1) end)
+end
+
+local following
+local function FollowWave()
+    if following then pcall(function() following:Disconnect() end) end
+    local hrp = lp.Character and lp.Character.HumanoidRootPart
+    if not hrp then return end
+    following = rs.RenderStepped:Connect(function()
+        pcall(function()
+            if Handler.Status ~= "Tsunami" then
+                following:Disconnect(); following = nil
+                return
+            end
+            local wave = waves and waves:FindFirstChildWhichIsA("Model") and waves:FindFirstChildWhichIsA("Model"):FindFirstChildWhichIsA("Part")
+            if not wave then return end
+            hrp.CFrame = CFrame.new(wave.Position + Vector3.new(80, 0, 0), wave.Position)
+        end)
+    end)
+end
+
+local function findBonus()
+    if not kupg then return end
+    pcall(function()
+        for _, item in ipairs(kupg:GetChildren()) do
+            if item:IsA("ImageButton") and item.Name == "Bonus" and item.Visible then
+                local pos = item.AbsolutePosition + (item.AbsoluteSize / 2)
+                vim:SendMouseButtonEvent(pos.X, pos.Y, 0, true, game, 0)
+                vim:SendMouseButtonEvent(pos.X, pos.Y, 0, false, game, 0)
+                break
+            end
+        end
+    end)
+end
+
+local function claim()
+    if not plot then return end
+    pcall(function()
+        local hrp = lp.Character and lp.Character.HumanoidRootPart
+        if not hrp then return end
+        for _, slot in ipairs(plot.Buttons:GetChildren()) do
+            firetouchinterest(hrp, slot, true)
+            firetouchinterest(hrp, slot, false)
+        end
+    end)
+end
+
+-- ============ WindUI 界面 ============
+local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
+
+WindUI:Localization({
+    Enabled = true,
+    Prefix = "loc:",
+    DefaultLanguage = "en",
+    Translations = {
+        ["ru"] = {
+            ["CHAOS_TITLE"] = "踢一个幸运方块",
+            ["CHAOS_KILLER"] = "混乱杀手",
+            ["KICK_FEATURES"] = "Функции удара",
+            ["WAVE_FEATURES"] = "Функции волн",
+            ["MISC_FEATURES"] = "Прочее",
+        },
+        ["en"] = {
+            ["CHAOS_TITLE"] = "踢一个幸运方块",
+            ["CHAOS_KILLER"] = "Chaos Killer",
+            ["KICK_FEATURES"] = "Kick Features",
+            ["WAVE_FEATURES"] = "Wave Features",
+            ["MISC_FEATURES"] = "Misc",
+        }
+    }
+})
+
+WindUI.TransparencyValue = 0.2
+WindUI:SetTheme("Dark")
+
+local gameName = "踢一个幸运方块"
+
+local Window = WindUI:CreateWindow({
+    Title = gameName,
+    Icon = "sword",
+    Author = "混乱杀手",
+    Folder = "ChaosKillerPro",
+    Size = UDim2.fromOffset(700, 500),
+    Theme = "Dark",
+    SideBarWidth = 200,
+    ScrollBarEnabled = true
+})
+
+-- 顶部绿色标签
+Window:Tag({
+    Title = "踢一个幸运方块",
+    Color = Color3.fromHex("#30ff6a")
+})
+Window:Tag({
+    Title = "混乱杀手",
+})
+
+Window:Tag({
+    Title = "Chaos Killer Pro",
+})
+-- ============ 第1个标签：踢一个幸运方块 ============
+local tab1Section = Window:Section({ Title = "功能", Opened = true })
+
+-- 踢击功能区域
+local kickTab = tab1Section:Tab({ Title = "自动踢", Icon = "sword" })
+
+kickTab:Paragraph({
+    Title = "踢击功能",
+    Desc = "踢击功能",
+    Image = "sword",
+    ImageSize = 20,
+    Color = "White"
+})
+
+kickTab:Divider()
+
+kickTab:Button({
+    Title = "全力踢击",
+    Icon = "zap",
+    Callback = function() _kick() end
+})
+
+local autoKick = false
+kickTab:Toggle({
+    Title = "自动踢击",
+    Desc = "自动执行踢击",
+    Value = false,
+    Callback = function(v)
+        autoKick = v
+        if not v then return end
+        task.spawn(function()
+            while task.wait(0.4) and autoKick do
+                pcall(function()
+                    if Handler.InGame then return end
+                    local hrp = lp.Character and lp.Character.HumanoidRootPart
+                    if hrp and area then hrp.CFrame = area.CFrame end
+                    _kick(1)
+                end)
+            end
+        end)
+    end
+})
+
+kickTab:Divider()
+
+local WeightBonus = nil
+kickTab:Toggle({
+    Title = "自动领取重量奖励",
+    Desc = "自动领取重量奖励",
+    Value = false,
+    Callback = function(v)
+        if v then
+            if not WeightBonus and kupg then
+                WeightBonus = kupg.DescendantAdded:Connect(findBonus)
+            end
+            findBonus()
+        else
+            if WeightBonus then pcall(function() WeightBonus:Disconnect() end); WeightBonus = nil end
+        end
+    end
+})
+
+-- 巨浪功能区域
+local waveTab = tab1Section:Tab({ Title = "巨浪", Icon = "waves" })
+
+waveTab:Paragraph({
+    Title = "巨浪",
+    Desc = "巨浪逃离",
+    Image = "waves",
+    ImageSize = 20,
+    Color = "White"
+})
+
+waveTab:Divider()
+
+waveTab:Button({
+    Title = "手动逃离巨浪",
+    Icon = "hand",
+    Callback = function() FollowWave() end
+})
+
+local collecting = false
+pcall(function()
+    Handler.StatusChanged:Connect(function()
+        if Handler.Status == "Tsunami" and collecting then FollowWave() end
+    end)
+end)
+
+waveTab:Toggle({
+    Title = "自动逃离巨浪",
+    Desc = "自动逃离巨浪",
+    Value = false,
+    Callback = function(v)
+        collecting = v
+        if not v and following then pcall(function() following:Disconnect() end); following = nil end
+    end
+})
+
+-- 杂项功能区域
+local miscTab = tab1Section:Tab({ Title = "其他功能", Icon = "settings" })
+
+miscTab:Paragraph({
+    Title = "杂项功能",
+    Desc = "其他功能",
+    Image = "settings",
+    ImageSize = 20,
+    Color = "White"
+})
+
+miscTab:Divider()
+
+miscTab:Toggle({
+    Title = "自动转生",
+    Desc = "自动执行转生",
+    Value = false,
+    Callback = function(v)
+        task.spawn(function()
+            while task.wait(6) do
+                if not v then break end
+                pcall(function() Network["rev_RebirthRequest"]:FireServer() end)
+            end
+        end)
+    end
+})
+
+miscTab:Toggle({
+    Title = "移动加速",
+    Desc = "双倍移动速度",
+    Value = false,
+    Callback = function(v)
+        pcall(function()
+            local humanoid = lp.Character and lp.Character.Humanoid
+            if humanoid then
+                local originalSpeed = 16
+                humanoid.WalkSpeed = v and (originalSpeed * 2) or originalSpeed
+            end
+        end)
+    end
+})
+
+miscTab:Divider()
+
+miscTab:Button({
+    Title = "手动领取金币",
+    Icon = "coins",
+    Callback = claim
+})
+
+miscTab:Toggle({
+    Title = "自动领取金币",
+    Desc = "自动领取金币",
+    Value = false,
+    Callback = function(v)
+        task.spawn(function()
+            while task.wait(6) do
+                if not v then break end
+                claim()
+            end
+        end)
+    end
+})
+
+-- ============ 第2个标签：混乱杀手 ============
+local tab2Section = Window:Section({ Title = "配置", Opened = true })
+
+-- 背景设置
+local appearanceTab = tab2Section:Tab({ Title = "外观", Icon = "brush" })
+
+appearanceTab:Paragraph({
+    Title = "界面外观",
+    Desc = "自定义界面样式",
+    Image = "palette",
+    ImageSize = 20,
+    Color = "White"
+})
+
+appearanceTab:Divider()
+
+-- 主题切换
+local themes = {}
+for themeName, _ in pairs(WindUI:GetThemes()) do
+    table.insert(themes, themeName)
+end
+table.sort(themes)
+
+local themeDropdown = appearanceTab:Dropdown({
+    Title = "选择主题",
+    Values = themes,
+    Value = "Dark",
+    Callback = function(theme)
+        WindUI:SetTheme(theme)
+        WindUI:Notify({
+            Title = "主题已更改",
+            Content = theme,
+            Icon = "palette",
+            Duration = 2
+        })
+    end
+})
+
+-- 透明度滑块
+local transparencySlider = appearanceTab:Slider({
+    Title = "窗口透明度",
+    Value = { Min = 0, Max = 1, Default = 0.2 },
+    Step = 0.1,
+    Callback = function(value)
+        Window:ToggleTransparency(tonumber(value) > 0)
+        WindUI.TransparencyValue = tonumber(value)
+    end
+})
+
+-- 暗色模式开关
+appearanceTab:Toggle({
+    Title = "暗色模式",
+    Desc = "使用深色配色方案",
+    Value = true,
+    Callback = function(state)
+        WindUI:SetTheme(state and "Dark" or "Light")
+        themeDropdown:Select(state and "Dark" or "Light")
+    end
+})
+
+appearanceTab:Divider()
+
+-- 背景图片设置
+local backgroundInput = nil
+local backgroundImageLabel = nil
+
+local function setBackgroundImage(imageUrl)
+    pcall(function()
+        for _, gui in pairs(game.CoreGui:GetChildren()) do
+            if gui:IsA("ScreenGui") then
+                local oldBg = gui:FindFirstChild("CustomBackground")
+                if oldBg then oldBg:Destroy() end
+                local bg = Instance.new("ImageLabel")
+                bg.Name = "CustomBackground"
+                bg.Image = imageUrl
+                bg.Size = UDim2.fromScale(1, 1)
+                bg.Position = UDim2.fromOffset(0, 0)
+                bg.BackgroundTransparency = 1
+                bg.ScaleType = Enum.ScaleType.Crop
+                bg.ZIndex = 0
+                bg.Parent = gui
+                backgroundImageLabel = bg
+                break
+            end
+        end
+    end)
+end
+
+appearanceTab:Paragraph({
+    Title = " 背景设置",
+    Desc = "更改窗口背景图片",
+    Image = "image",
+    ImageSize = 20,
+    Color = "White"
+})
+
+backgroundInput = appearanceTab:Input({
+    Title = "图片链接",
+    Desc = "粘贴图片链接 (png/jpg/gif)",
+    Value = "https://raw.githubusercontent.com/dream77239/666/refs/heads/main/Image_1771753591613_471_1771755601425edit.jpg",
+    Callback = function(value) end
+})
+
+appearanceTab:Button({
+    Title = "应用背景",
+    Icon = "image",
+    Variant = "Primary",
+    Callback = function()
+        local url = backgroundInput:GetValue()
+        if url and url ~= "" then
+            setBackgroundImage(url)
+            WindUI:Notify({
+                Title = "背景已更新",
+                Content = "新背景已应用",
+                Icon = "check",
+                Duration = 3
+            })
+        end
+    end
+})
+
+appearanceTab:Button({
+    Title = "重置背景",
+    Icon = "refresh-cw",
+    Callback = function()
+        local defaultUrl = "https://raw.githubusercontent.com/dream77239/666/refs/heads/main/Image_1771753591613_471_1771755601425edit.jpg"
+        setBackgroundImage(defaultUrl)
+        backgroundInput:SetValue(defaultUrl)
+        WindUI:Notify({
+            Title = "背景已重置",
+            Content = "已恢复默认背景",
+            Icon = "refresh-cw",
+            Duration = 2
+        })
+    end
+})
+
+-- 关于页面
+local aboutTab = tab2Section:Tab({ Title = "关于", Icon = "info" })
+
+aboutTab:Paragraph({
+    Title = "这个没啥用，不用看了这个是ui",
+    Desc = "",
+    Image = "github",
+    ImageSize = 20,
+    Color = "Grey",
+    Buttons = {
+        {
+            Title = "复制链接",
+            Icon = "copy",
+            Variant = "Tertiary",
+            Callback = function()
+                setclipboard("https://github.com/Footagesus/WindUI")
+                WindUI:Notify({
+                    Title = "已复制",
+                    Content = "链接已复制到剪贴板",
+                    Duration = 2
+                })
+            end
+        }
+    }
+})
+
+-- 延迟设置默认背景
+task.spawn(function()
+    task.wait(2)
+    local defaultUrl = "https://raw.githubusercontent.com/dream77239/666/refs/heads/main/Image_1771753591613_471_1771755601425edit.jpg"
+    setBackgroundImage(defaultUrl)
+end)
+
+Window:OnClose(function() print("Window closed") end)
+Window:OnDestroy(function() print("Window destroyed") end)
+
+print("")
+print("")
