@@ -1,0 +1,291 @@
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+if playerGui:FindFirstChild("CkTeleportMenu") then
+    playerGui.CkTeleportMenu:Destroy()
+end
+
+local TARGET_POSITION = Vector3.new(2669.8, 584.4, -1032.4)
+
+local function TeleportToLastLevel()
+    local char = player.Character
+    if not char or not char.Parent then
+        for i = 1, 10 do
+            task.wait(0.2)
+            char = player.Character
+            if char and char.Parent then break end
+        end
+    end
+    if not char or not char.Parent then return end
+    
+    local rootPart = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
+    if rootPart then
+        pcall(function()
+            rootPart.CFrame = CFrame.new(TARGET_POSITION)
+        end)
+    end
+end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "CkTeleportMenu"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = playerGui
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(220, 220, 225)
+MainFrame.BorderSizePixel = 0
+MainFrame.Position = UDim2.new(0.5, -110, 0.75, 0)
+MainFrame.Size = UDim2.new(0, 220, 0, 200)
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.ClipsDescendants = true
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 14)
+MainCorner.Parent = MainFrame
+
+local MainStroke = Instance.new("UIStroke")
+MainStroke.Color = Color3.fromRGB(120, 120, 130)
+MainStroke.Thickness = 1.5
+MainStroke.Parent = MainFrame
+
+local Shadow = Instance.new("Frame")
+Shadow.Parent = ScreenGui
+Shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Shadow.BackgroundTransparency = 0.6
+Shadow.BorderSizePixel = 0
+Shadow.Size = MainFrame.Size
+Shadow.Position = MainFrame.Position + UDim2.new(0, 5, 0, 5)
+Shadow.ZIndex = 0
+
+local ShadowCorner = Instance.new("UICorner")
+ShadowCorner.CornerRadius = UDim.new(0, 14)
+ShadowCorner.Parent = Shadow
+
+MainFrame:GetPropertyChangedSignal("Position"):Connect(function()
+    Shadow.Position = MainFrame.Position + UDim2.new(0, 5, 0, 5)
+end)
+MainFrame:GetPropertyChangedSignal("Size"):Connect(function()
+    Shadow.Size = MainFrame.Size
+end)
+
+local TitleBar = Instance.new("Frame")
+TitleBar.Parent = MainFrame
+TitleBar.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+TitleBar.BorderSizePixel = 0
+TitleBar.Size = UDim2.new(1, 0, 0, 38)
+TitleBar.Position = UDim2.new(0, 0, 0, 0)
+
+local TitleBarCorner = Instance.new("UICorner")
+TitleBarCorner.CornerRadius = UDim.new(0, 14)
+TitleBarCorner.Parent = TitleBar
+
+local TitleIcon = Instance.new("TextLabel")
+TitleIcon.Parent = TitleBar
+TitleIcon.BackgroundTransparency = 1
+TitleIcon.Size = UDim2.new(0, 35, 1, 0)
+TitleIcon.Position = UDim2.new(0, 5, 0, 0)
+TitleIcon.Font = Enum.Font.GothamBold
+TitleIcon.Text = ""
+TitleIcon.TextColor3 = Color3.fromRGB(255, 200, 50)
+TitleIcon.TextSize = 20
+TitleIcon.TextXAlignment = Enum.TextXAlignment.Center
+
+local Title = Instance.new("TextLabel")
+Title.Parent = TitleBar
+Title.BackgroundTransparency = 1
+Title.Size = UDim2.new(1, -80, 1, 0)
+Title.Position = UDim2.new(0, 40, 0, 0)
+Title.Font = Enum.Font.GothamBold
+Title.Text = "Chaos Killer"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 15
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.TextYAlignment = Enum.TextYAlignment.Center
+
+local FoldButton = Instance.new("TextButton")
+FoldButton.Parent = TitleBar
+FoldButton.BackgroundColor3 = Color3.fromRGB(80, 80, 95)
+FoldButton.BorderSizePixel = 0
+FoldButton.Size = UDim2.new(0, 32, 0, 28)
+FoldButton.Position = UDim2.new(1, -38, 0, 5)
+FoldButton.Font = Enum.Font.GothamBold
+FoldButton.Text = "▼"
+FoldButton.TextColor3 = Color3.fromRGB(220, 220, 255)
+FoldButton.TextSize = 14
+
+local FoldCorner = Instance.new("UICorner")
+FoldCorner.CornerRadius = UDim.new(0, 8)
+FoldCorner.Parent = FoldButton
+
+local CloseButton = Instance.new("TextButton")
+CloseButton.Parent = TitleBar
+CloseButton.BackgroundColor3 = Color3.fromRGB(180, 70, 60)
+CloseButton.BorderSizePixel = 0
+CloseButton.Size = UDim2.new(0, 28, 0, 28)
+CloseButton.Position = UDim2.new(1, -72, 0, 5)
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.Text = "✕"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextSize = 14
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 8)
+CloseCorner.Parent = CloseButton
+
+local ScrollFrame = Instance.new("ScrollingFrame")
+ScrollFrame.Parent = MainFrame
+ScrollFrame.Position = UDim2.new(0, 8, 0, 46)
+ScrollFrame.Size = UDim2.new(1, -16, 1, -54)
+ScrollFrame.BackgroundTransparency = 1
+ScrollFrame.ScrollBarThickness = 4
+ScrollFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 120)
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Parent = ScrollFrame
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 8)
+UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+local isExpanded = true
+local expandedSize = UDim2.new(0, 220, 0, 200)
+local collapsedSize = UDim2.new(0, 220, 0, 38)
+
+local function toggleExpand()
+    isExpanded = not isExpanded
+    if isExpanded then
+        ScrollFrame.Visible = true
+        MainFrame:TweenSize(expandedSize, Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.25, true)
+        FoldButton.Text = "▼"
+    else
+        ScrollFrame.Visible = false
+        MainFrame:TweenSize(collapsedSize, Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.25, true)
+        FoldButton.Text = "▲"
+    end
+end
+FoldButton.MouseButton1Click:Connect(toggleExpand)
+CloseButton.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
+
+local function createButton(text, callback)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0, 200, 0, 44)
+    button.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+    button.BackgroundTransparency = 0.1
+    button.BorderSizePixel = 0
+    button.Text = text
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.TextSize = 14
+    button.Font = Enum.Font.GothamBold
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 10)
+    corner.Parent = button
+    
+    button.MouseEnter:Connect(function()
+        button.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+    end)
+    button.MouseLeave:Connect(function()
+        button.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+    end)
+    
+    button.Parent = ScrollFrame
+    button.MouseButton1Click:Connect(callback)
+    return button
+end
+
+local coordCard = Instance.new("Frame")
+coordCard.Size = UDim2.new(0, 200, 0, 50)
+coordCard.BackgroundColor3 = Color3.fromRGB(200, 200, 210)
+coordCard.BackgroundTransparency = 0.3
+coordCard.Parent = ScrollFrame
+
+local coordCorner = Instance.new("UICorner")
+coordCorner.CornerRadius = UDim.new(0, 10)
+coordCorner.Parent = coordCard
+
+local coordLabel = Instance.new("TextLabel")
+coordLabel.Size = UDim2.new(1, 0, 1, 0)
+coordLabel.BackgroundTransparency = 1
+coordLabel.Text = "你没看错，就一个功能，传送的"
+coordLabel.TextColor3 = Color3.fromRGB(40, 40, 50)
+coordLabel.TextSize = 11
+coordLabel.TextWrapped = true
+coordLabel.Font = Enum.Font.Gotham
+coordLabel.Parent = coordCard
+
+createButton("传送到最后一关", function()
+    TeleportToLastLevel()
+end)
+
+local tipLabel = Instance.new("TextLabel")
+tipLabel.Size = UDim2.new(0, 200, 0, 25)
+tipLabel.BackgroundTransparency = 1
+tipLabel.Text = "如果你觉得还能添加什么功能，你就跟作者说"
+tipLabel.TextColor3 = Color3.fromRGB(80, 80, 100)
+tipLabel.TextSize = 10
+tipLabel.Font = Enum.Font.Gotham
+tipLabel.Parent = ScrollFrame
+
+local posFrame = Instance.new("Frame")
+posFrame.Size = UDim2.new(0, 200, 0, 28)
+posFrame.BackgroundColor3 = Color3.fromRGB(200, 200, 210)
+posFrame.BackgroundTransparency = 0.5
+posFrame.Parent = ScrollFrame
+
+local posCorner = Instance.new("UICorner")
+posCorner.CornerRadius = UDim.new(0, 8)
+posCorner.Parent = posFrame
+
+local currentPosLabel = Instance.new("TextLabel")
+currentPosLabel.Size = UDim2.new(1, 0, 1, 0)
+currentPosLabel.BackgroundTransparency = 1
+currentPosLabel.Text = "."
+currentPosLabel.TextColor3 = Color3.fromRGB(50, 50, 65)
+currentPosLabel.TextSize = 10
+currentPosLabel.Font = Enum.Font.Gotham
+currentPosLabel.Parent = posFrame
+
+task.spawn(function()
+    while currentPosLabel and currentPosLabel.Parent do
+        task.wait(0.3)
+        local char = player.Character
+        if char then
+            local root = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso")
+            if root then
+                local pos = root.Position
+                currentPosLabel.Text = string.format()
+            else
+                currentPosLabel.Text = ""
+            end
+        else
+            currentPosLabel.Text = "..."
+        end
+    end
+end)
+
+local function updateCanvas()
+    task.wait(0.1)
+    local totalHeight = 0
+    for _, child in pairs(ScrollFrame:GetChildren()) do
+        if child:IsA("TextButton") or child:IsA("TextLabel") or child:IsA("Frame") then
+            totalHeight = totalHeight + child.Size.Y.Offset + 8
+        end
+    end
+    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, totalHeight + 20)
+end
+updateCanvas()
+
+UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 10)
+end)
+
+local UIS = game:GetService("UserInputService")
+UIS.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.T then
+        TeleportToLastLevel()
+    end
+end)
+
+print("")
