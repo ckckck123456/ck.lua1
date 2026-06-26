@@ -815,7 +815,8 @@ local Tabs = {
     Player = Window:Tab({ Title = "玩家功能", Icon = "user", Locked = false }),
     Combat = Window:Tab({ Title = "战斗功能", Icon = "target", Locked = false }),
     Visual = Window:Tab({ Title = "视觉功能", Icon = "eye", Locked = false }),
-    Misc = Window:Tab({ Title = "其他功能", Icon = "settings", Locked = false })
+    Misc = Window:Tab({ Title = "其他功能", Icon = "settings", Locked = false }),
+    Resurrect = Window:Tab({ Title = "复活版功能", Icon = "refresh", Locked = false })  
 }
 
 Tabs.World:Toggle({
@@ -10601,7 +10602,7 @@ Section6:Button("点击传送", function()
     mouse = game.Players.LocalPlayer:GetMouse()
     tool = Instance.new("Tool")
     tool.RequiresHandle = false
-    tool.Name = "混乱杀手传送工具"
+    tool.Name = "[BS]传送工具"
     tool.Activated:connect(function()
         local pos = mouse.Hit+Vector3.new(0,2.5,0)
         pos = CFrame.new(pos.X,pos.Y,pos.Z)
